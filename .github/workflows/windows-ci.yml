@@ -1,0 +1,176 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements-windows.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install system dependencies
+      run: |
+        # 安装Windows特定的系统依赖
+        choco install --no-progress -y vcredist2019
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # 使用Windows兼容的依赖文件
+        pip install -r requirements-windows.txt
+        # 安装测试依赖
+        pip install pytest pytest-cov pytest-qt pytest-xvfb
+    
+    - name: Verify PyQt5 installation
+      run: |
+        python -c "from PyQt5.QtWidgets import QApplication; print('PyQt5 OK')"
+        python -c "import pyqtgraph; print('PyQtGraph OK')"
+        python -c "import serial; print('PySerial OK')"
+    
+    - name: Run dependency tests
+      run: |
+        python test_deps.py
+    
+    - name: Run unit tests
+      run: |
+        # 设置虚拟显示环境变量
+        $env:QT_QPA_PLATFORM = "offscreen"
+        # 运行测试
+        python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml
+      continue-on-error: true  # GUI测试可能在CI环境中失败
+    
+    - name: Test application startup
+      run: |
+        # 测试应用程序能否正常启动（无GUI模式）
+        $env:QT_QPA_PLATFORM = "offscreen"
+        timeout 30 python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from startup_optimizer import setup_fast_startup
+        setup_fast_startup()
+        print('Startup test passed')
+        "
+      continue-on-error: true
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: windows
+        name: codecov-windows
+      if: matrix.python-version == '3.11'  # 只在一个版本上传覆盖率
+
+  build-windows:
+    runs-on: windows-latest
+    needs: test-windows
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-windows.txt
+        pip install -r build_requirements.txt
+    
+    - name: Build executable
+      run: |
+        # 运行打包脚本
+        .\build_windows.bat
+    
+    - name: Test executable
+      run: |
+        # 测试生成的可执行文件
+        if (Test-Path "dist\EvoBot控制系统\EvoBot控制系统.exe") {
+          Write-Host "✅ 可执行文件生成成功"
+          # 可以添加更多测试，比如检查文件大小等
+          $size = (Get-Item "dist\EvoBot控制系统\EvoBot控制系统.exe").Length / 1MB
+          Write-Host "📦 可执行文件大小: $([math]::Round($size, 2)) MB"
+        } else {
+          Write-Host "❌ 可执行文件生成失败"
+          exit 1
+        }
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: evobot-windows-build
+        path: |
+          dist/EvoBot控制系统/
+          !dist/EvoBot控制系统/**/*.pdb
+        retention-days: 30
+    
+    - name: Create release archive
+      run: |
+        # 创建发布压缩包
+        Compress-Archive -Path "dist\EvoBot控制系统\*" -DestinationPath "EvoBot-Windows-x64.zip"
+    
+    - name: Upload release archive
+      uses: actions/upload-artifact@v3
+      with:
+        name: evobot-windows-release
+        path: EvoBot-Windows-x64.zip
+        retention-days: 90
+
+  code-quality:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    
+    - name: Install code quality tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black flake8 mypy
+        pip install -r requirements-windows.txt
+    
+    - name: Run Black formatter check
+      run: |
+        black --check --diff src/ tests/
+      continue-on-error: true
+    
+    - name: Run Flake8 linter
+      run: |
+        flake8 src/ tests/ --max-line-length=88 --extend-ignore=E203,W503
+      continue-on-error: true
+    
+    - name: Run MyPy type checker
+      run: |
+        mypy src/ --ignore-missing-imports
+      continue-on-error: true

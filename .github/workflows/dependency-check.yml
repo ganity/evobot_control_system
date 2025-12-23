@@ -1,0 +1,44 @@
+name: Dependency Check
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # 每周一检查依赖
+  workflow_dispatch:
+
+jobs:
+  check-dependencies:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    
+    - name: Check for dependency updates
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-check-reqs pipdeptree
+        
+        # 检查依赖冲突
+        echo "🔍 检查依赖冲突..."
+        pip check
+        
+        # 显示依赖树
+        echo "📋 依赖树:"
+        pipdeptree
+    
+    - name: Test Windows compatibility
+      run: |
+        echo "🧪 测试Windows兼容性..."
+        python fix-windows-deps.py
+        python test_deps.py
+    
+    - name: Security audit
+      run: |
+        pip install safety
+        echo "🔒 安全审计..."
+        safety check --json || echo "发现安全问题，请检查"
+      continue-on-error: true

@@ -186,7 +186,16 @@ def main():
         return False
 
 
+def is_ci_environment():
+    """检查是否在CI环境中运行"""
+    return any(key in os.environ for key in ['CI', 'GITHUB_ACTIONS', 'CONTINUOUS_INTEGRATION'])
+
+
 if __name__ == "__main__":
     success = main()
-    input("\n按回车键退出...")
+    
+    # 在CI环境中不等待用户输入
+    if not is_ci_environment():
+        input("\n按回车键退出...")
+    
     sys.exit(0 if success else 1)
