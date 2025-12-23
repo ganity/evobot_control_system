@@ -23,21 +23,39 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python fix-windows-deps.py
+        # 直接使用requirements文件，避免复杂脚本
+        pip install -r requirements-windows.txt
+      continue-on-error: false
     
-    - name: Run tests
+    - name: Run dependency tests
       run: |
-        python test_deps.py
-        echo "✅ 依赖测试通过"
+        python -c "
+        print('🧪 测试依赖导入...')
+        try:
+            from PyQt5.QtWidgets import QApplication
+            print('✅ PyQt5 导入成功')
+        except ImportError as e:
+            print(f'❌ PyQt5 导入失败: {e}')
+            exit(1)
+        
+        try:
+            import pyqtgraph, serial, numpy, scipy
+            print('✅ 其他依赖导入成功')
+        except ImportError as e:
+            print(f'❌ 依赖导入失败: {e}')
+            exit(1)
+        
+        print('🎉 所有依赖测试通过')
+        "
     
-    - name: Test import
+    - name: Test application startup
       run: |
         python -c "
         import sys
         sys.path.insert(0, 'src')
         from startup_optimizer import setup_fast_startup
         setup_fast_startup()
-        print('✅ 导入测试通过')
+        print('✅ 应用启动测试通过')
         "
 
   windows-build:
@@ -54,10 +72,10 @@ jobs:
       with:
         python-version: "3.11"
     
-    - name: Install dependencies
+    - name: Install dependencies and build tools
       run: |
         python -m pip install --upgrade pip
-        python fix-windows-deps.py
+        pip install -r requirements-windows.txt
         pip install pyinstaller
     
     - name: Build executable
@@ -71,6 +89,7 @@ jobs:
           Write-Host "✅ 构建成功，大小: $([math]::Round($size, 2)) MB"
         } else {
           Write-Host "❌ 构建失败"
+          Get-ChildItem dist -Recurse | Format-Table Name, Length
           exit 1
         }
     

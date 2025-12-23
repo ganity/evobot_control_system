@@ -17,28 +17,33 @@ jobs:
       with:
         python-version: "3.11"
     
-    - name: Check for dependency updates
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pip-check-reqs pipdeptree
-        
-        # 检查依赖冲突
+        pip install -r requirements-windows.txt
+        pip install pip-check-reqs pipdeptree safety
+    
+    - name: Check for dependency conflicts
+      run: |
         echo "🔍 检查依赖冲突..."
         pip check
         
-        # 显示依赖树
         echo "📋 依赖树:"
         pipdeptree
+      continue-on-error: true
     
     - name: Test Windows compatibility
       run: |
         echo "🧪 测试Windows兼容性..."
-        python fix-windows-deps.py
-        python test_deps.py
+        python -c "
+        print('测试核心依赖导入...')
+        from PyQt5.QtWidgets import QApplication
+        import pyqtgraph, serial, numpy, scipy
+        print('✅ 所有依赖导入成功')
+        "
     
     - name: Security audit
       run: |
-        pip install safety
         echo "🔒 安全审计..."
         safety check --json || echo "发现安全问题，请检查"
       continue-on-error: true

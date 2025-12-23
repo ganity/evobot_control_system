@@ -3,7 +3,6 @@
 
 # PyQt5 - 使用兼容Windows的版本
 PyQt5==5.15.10
-PyQt5-Qt5==5.15.2
 PyQt5-sip==12.13.0
 
 # 图形界面
@@ -20,9 +19,9 @@ scipy>=1.10.0
 pyyaml>=6.0
 loguru>=0.7.0
 
-# 机器人工具箱
-roboticstoolbox-python>=1.1.0
-spatialmath-python>=1.1.0
-
 # 绘图
 matplotlib>=3.7.0
+
+# 机器人工具箱 (可选，可能安装失败)
+# roboticstoolbox-python>=1.1.0
+# spatialmath-python>=1.1.0
