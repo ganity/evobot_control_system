@@ -180,6 +180,25 @@ class MainWindow(QMainWindow):
                 width: 20px;
             }}
             
+            /* 下拉列表弹窗样式 - 解决Windows下部分系统可能出现的黑底问题 */
+            QComboBox QAbstractItemView {{
+                background-color: {panel_bg};
+                border: 1px solid {border_color};
+                selection-background-color: {accent_blue};
+                selection-color: white;
+                outline: none;
+            }}
+            QComboBox QAbstractItemView::item {{
+                min-height: 28px;
+                padding: 4px 8px;
+                background-color: {panel_bg};
+                color: {text_primary};
+            }}
+            QComboBox QAbstractItemView::item:selected {{
+                background-color: {accent_blue};
+                color: white;
+            }}
+            
             /* 按钮通用样式 */
             QPushButton {{
                 background-color: {panel_bg};
@@ -594,6 +613,10 @@ class MainWindow(QMainWindow):
         baudrate = self.config.get('communication', {}).get('serial', {}).get('baudrate', 1000000)
         try:
             self.serial_manager.config = SerialConfig(port=port, baudrate=baudrate)
+            
+            # 设置数据接收回调
+            self.serial_manager.set_data_received_callback(self.on_data_received)
+            
             if self.serial_manager.connect():
                 if not self.device_monitor:
                     self.device_monitor = create_device_monitor(self.serial_manager, self.protocol_handler)
@@ -678,8 +701,24 @@ class MainWindow(QMainWindow):
         self.log_message(f"{alert.message}", "WARNING" if alert.level == "warning" else "ERROR")
         self.status_bar.showMessage(f"警告: {alert.message}", 5000)
 
-    def on_status_updated(self, status: HealthStatus):
-        self.status_updated.emit(vars(status))
+    def on_status_updated(self, status: Dict[str, Any]):
+        self.status_updated.emit(status)
+
+    def on_data_received(self, data: bytes):
+        """处理接收到的串口数据"""
+        try:
+            # 使用协议处理器解析数据
+            parsed_frames = self.protocol_handler.parse_received_data(data)
+            for frame_data in parsed_frames:
+                # 发布到消息总线供其他组件处理
+                self.message_bus.publish(
+                    Topics.ROBOT_STATE, 
+                    frame_data, 
+                    MessagePriority.NORMAL
+                )
+        except Exception as e:
+            logger.error(f"数据处理错误: {e}")
+            self.log_message(f"数据处理错误: {e}", "ERROR")
 
     def update_system_status(self, status: dict):
         pass # Handle detailed status updates if needed
@@ -689,7 +728,7 @@ class MainWindow(QMainWindow):
         # Notify controller if needed
         
     def on_joint_move_requested(self, joint_id, pos):
-        self.motion_controller.move_single_joint(joint_id, pos)
+        self.motion_controller.move_joint(joint_id, pos)
     
     def on_all_joints_move_requested(self, positions):
         self.motion_controller.move_to_position(positions)

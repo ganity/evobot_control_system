@@ -13,3 +13,6 @@ control_test/
 logs/*.log
 data/recordings/
 .DS_Store
+
+simulator/
+data/sequences/

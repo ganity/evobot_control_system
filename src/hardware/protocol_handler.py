@@ -14,6 +14,7 @@ from typing import List, Dict, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
 import time
+import threading
 
 from utils.logger import get_logger, log_performance
 from utils.message_bus import get_message_bus, Topics, MessagePriority
@@ -157,6 +158,10 @@ class ProtocolHandler:
         """初始化协议处理器"""
         self.frame_sequence = 0
         self.message_bus = get_message_bus()
+        
+        # 添加流式缓冲区管理
+        self.receive_buffer = []
+        self.buffer_lock = threading.RLock()
         
     def encode_position_command(self, positions: List[int], speeds: Optional[List[int]] = None) -> bytes:
         """
@@ -443,6 +448,94 @@ class ProtocolHandler:
             validated.append(limited_pos)
         
         return validated
+
+    def parse_received_data(self, raw_data: bytes) -> List[Dict[str, Any]]:
+        """
+        解析接收到的原始数据，提取完整帧并解码 - 使用流式缓冲区
+        
+        Args:
+            raw_data: 原始接收数据
+            
+        Returns:
+            解析后的帧数据列表
+        """
+        parsed_frames = []
+        
+        with self.buffer_lock:
+            # 将新数据添加到缓冲区
+            self.receive_buffer.extend(list(raw_data))
+            
+            # 处理缓冲区中的数据，查找完整帧
+            i = 0
+            while i < len(self.receive_buffer):
+                if self.receive_buffer[i] == 0xFD:  # 帧头
+                    # 检查前一个位置是否为帧尾（完整帧结束）
+                    if i > 0 and self.receive_buffer[i-1] == 0xF8:
+                        # 提取前面的完整帧进行处理
+                        frame_data = self.receive_buffer[:i]
+                        if len(frame_data) > 2:  # 至少包含帧头和帧尾
+                            try:
+                                frame_bytes = bytes(frame_data)
+                                robot_status = self.decode_status_response(frame_bytes)
+                                if robot_status:
+                                    parsed_frames.append({
+                                        'type': 'status',
+                                        'data': robot_status,
+                                        'timestamp': time.time()
+                                    })
+                            except Exception as e:
+                                logger.error(f"帧解码错误: {e}")
+                        
+                        # 清除已处理的数据，保留当前帧头
+                        self.receive_buffer = self.receive_buffer[i:]
+                        i = 0
+                    else:
+                        # 检查缓冲区是否过长，防止溢出
+                        if len(self.receive_buffer) > 100:  # 最大帧长度限制
+                            # 清除缓冲区，只保留当前帧头
+                            self.receive_buffer = self.receive_buffer[i:]
+                            i = 0
+                        else:
+                            i += 1
+                else:
+                    i += 1
+            
+            # 检查缓冲区末尾是否有完整帧
+            if len(self.receive_buffer) > 2:
+                # 查找最后一个帧尾
+                last_tail_pos = -1
+                for j in range(len(self.receive_buffer) - 1, -1, -1):
+                    if self.receive_buffer[j] == 0xF8:
+                        last_tail_pos = j
+                        break
+                
+                if last_tail_pos > 0:
+                    # 查找对应的帧头
+                    frame_start = -1
+                    for j in range(last_tail_pos - 1, -1, -1):
+                        if self.receive_buffer[j] == 0xFD:
+                            frame_start = j
+                            break
+                    
+                    if frame_start >= 0:
+                        # 提取完整帧
+                        frame_data = self.receive_buffer[frame_start:last_tail_pos + 1]
+                        try:
+                            frame_bytes = bytes(frame_data)
+                            robot_status = self.decode_status_response(frame_bytes)
+                            if robot_status:
+                                parsed_frames.append({
+                                    'type': 'status',
+                                    'data': robot_status,
+                                    'timestamp': time.time()
+                                })
+                        except Exception as e:
+                            logger.error(f"帧解码错误: {e}")
+                        
+                        # 清除已处理的数据
+                        self.receive_buffer = self.receive_buffer[last_tail_pos + 1:]
+        
+        return parsed_frames
 
 
 # 全局协议处理器实例

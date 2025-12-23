@@ -511,27 +511,44 @@ class DeviceMonitor:
         """处理机器人状态更新"""
         try:
             data = message.data
-            if data['type'] == 'finger_status':
-                # 更新手指和手腕状态 (关节0-5)
-                for joint_data in data['joints']:
-                    joint_id = joint_data['id']
-                    if joint_id in self.joint_health:
-                        joint = self.joint_health[joint_id]
-                        joint.position = joint_data['position']
-                        joint.velocity = joint_data['velocity']
-                        joint.current = joint_data['current']
-                        joint.last_update = time.time()
+            if isinstance(data, dict) and 'type' in data:
+                # 处理解析后的帧数据
+                if data['type'] == 'status' and 'data' in data and data['data'] is not None:
+                    robot_status = data['data']
+                    
+                    # 更新关节状态
+                    for joint_data in robot_status.joints:
+                        joint_id = joint_data.joint_id
+                        if joint_id in self.joint_health:
+                            joint = self.joint_health[joint_id]
+                            joint.position = joint_data.position
+                            joint.velocity = joint_data.velocity
+                            joint.current = joint_data.current
+                            joint.last_update = time.time()
             
-            elif data['type'] == 'arm_status':
-                # 更新手臂状态 (关节6-9)
-                for joint_data in data['joints']:
-                    joint_id = joint_data['id']
-                    if joint_id in self.joint_health:
-                        joint = self.joint_health[joint_id]
-                        joint.position = joint_data['position']
-                        joint.velocity = joint_data['velocity']
-                        joint.current = joint_data['current']
-                        joint.last_update = time.time()
+            # 兼容旧格式
+            elif isinstance(data, dict) and 'type' in data:
+                if data['type'] == 'finger_status':
+                    # 更新手指和手腕状态 (关节0-5)
+                    for joint_data in data['joints']:
+                        joint_id = joint_data['id']
+                        if joint_id in self.joint_health:
+                            joint = self.joint_health[joint_id]
+                            joint.position = joint_data['position']
+                            joint.velocity = joint_data['velocity']
+                            joint.current = joint_data['current']
+                            joint.last_update = time.time()
+                
+                elif data['type'] == 'arm_status':
+                    # 更新手臂状态 (关节6-9)
+                    for joint_data in data['joints']:
+                        joint_id = joint_data['id']
+                        if joint_id in self.joint_health:
+                            joint = self.joint_health[joint_id]
+                            joint.position = joint_data['position']
+                            joint.velocity = joint_data['velocity']
+                            joint.current = joint_data['current']
+                            joint.last_update = time.time()
         
         except Exception as e:
             logger.error(f"处理机器人状态更新失败: {e}")

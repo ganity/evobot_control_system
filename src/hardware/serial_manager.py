@@ -98,6 +98,7 @@ class SerialManager:
         """
         ports = []
         try:
+            # 扫描系统串口
             for port_info in serial.tools.list_ports.comports():
                 port_data = {
                     'device': port_info.device,
@@ -109,6 +110,10 @@ class SerialManager:
                     'serial_number': port_info.serial_number
                 }
                 ports.append(port_data)
+            
+            # 添加虚拟端口扫描
+            virtual_ports = SerialManager._scan_virtual_ports()
+            ports.extend(virtual_ports)
                 
             logger.info(f"扫描到 {len(ports)} 个串口")
             return ports
@@ -116,6 +121,104 @@ class SerialManager:
         except Exception as e:
             logger.error(f"扫描串口失败: {e}")
             return []
+    
+    @staticmethod
+    def _scan_virtual_ports() -> List[Dict[str, str]]:
+        """
+        扫描虚拟串口
+        
+        Returns:
+            虚拟串口信息列表
+        """
+        import platform
+        import glob
+        import os
+        
+        virtual_ports = []
+        system = platform.system()
+        
+        try:
+            if system == "Windows":
+                # Windows虚拟端口 (com0com等)
+                virtual_port_names = ["COM4", "COM5", "COM6", "COM7", "COM8", "COM9"]
+                for port_name in virtual_port_names:
+                    try:
+                        # 尝试打开端口来验证是否存在
+                        import serial
+                        test_port = serial.Serial(port_name, timeout=0.1)
+                        test_port.close()
+                        virtual_ports.append({
+                            'device': port_name,
+                            'name': port_name,
+                            'description': '虚拟串口 (com0com)',
+                            'manufacturer': 'Virtual',
+                            'vid': None,
+                            'pid': None,
+                            'serial_number': None
+                        })
+                    except:
+                        continue
+                        
+            elif system == "Darwin":  # macOS
+                # socat创建的虚拟端口
+                virtual_patterns = [
+                    "/tmp/ttyVIRT*",
+                    "/dev/ttys*"
+                ]
+                
+                for pattern in virtual_patterns:
+                    for port_path in glob.glob(pattern):
+                        if os.path.exists(port_path):
+                            # 检查是否可访问
+                            try:
+                                # 使用基本文件操作测试
+                                with open(port_path, 'r+b', buffering=0):
+                                    pass
+                                
+                                virtual_ports.append({
+                                    'device': port_path,
+                                    'name': os.path.basename(port_path),
+                                    'description': '虚拟串口 (socat)',
+                                    'manufacturer': 'Virtual',
+                                    'vid': None,
+                                    'pid': None,
+                                    'serial_number': None
+                                })
+                            except:
+                                continue
+                                
+            else:  # Linux
+                # Linux虚拟端口
+                virtual_patterns = [
+                    "/dev/pts/*",
+                    "/tmp/ttyVIRT*"
+                ]
+                
+                for pattern in virtual_patterns:
+                    for port_path in glob.glob(pattern):
+                        if os.path.exists(port_path):
+                            try:
+                                # 检查权限
+                                if os.access(port_path, os.R_OK | os.W_OK):
+                                    virtual_ports.append({
+                                        'device': port_path,
+                                        'name': os.path.basename(port_path),
+                                        'description': '虚拟串口 (socat/pts)',
+                                        'manufacturer': 'Virtual',
+                                        'vid': None,
+                                        'pid': None,
+                                        'serial_number': None
+                                    })
+                            except:
+                                continue
+            
+            if virtual_ports:
+                logger.info(f"发现 {len(virtual_ports)} 个虚拟串口")
+                
+        except Exception as e:
+            logger.warning(f"虚拟串口扫描失败: {e}")
+        
+        return virtual_ports
     
     def connect(self, port: Optional[str] = None, baudrate: Optional[int] = None) -> bool:
         """
@@ -146,22 +249,41 @@ class SerialManager:
                 if self.serial_port and self.serial_port.is_open:
                     self.serial_port.close()
                 
-                # 创建串口连接
-                self.serial_port = serial.Serial(
-                    port=self.config.port,
-                    baudrate=self.config.baudrate,
-                    bytesize=self.config.bytesize,
-                    parity=self.config.parity,
-                    stopbits=self.config.stopbits,
-                    timeout=self.config.timeout
-                )
+                # 创建串口连接 - 针对macOS虚拟端口优化
+                import platform
+                is_macos = platform.system() == "Darwin"
+                is_virtual_port = ("/tmp/" in self.config.port or "/dev/ttys" in self.config.port)
                 
-                # 设置缓冲区大小
-                if hasattr(self.serial_port, 'set_buffer_size'):
-                    self.serial_port.set_buffer_size(
-                        rx_size=self.config.buffer_size,
-                        tx_size=self.config.buffer_size
+                if is_macos and is_virtual_port:
+                    # macOS虚拟端口，使用简化设置
+                    logger.info(f"检测到macOS虚拟端口: {self.config.port}")
+                    self.serial_port = serial.Serial(
+                        port=self.config.port,
+                        baudrate=9600,  # 使用较低的波特率
+                        timeout=self.config.timeout
                     )
+                    logger.info("使用macOS虚拟端口兼容模式")
+                else:
+                    # 标准串口设置
+                    self.serial_port = serial.Serial(
+                        port=self.config.port,
+                        baudrate=self.config.baudrate,
+                        bytesize=self.config.bytesize,
+                        parity=self.config.parity,
+                        stopbits=self.config.stopbits,
+                        timeout=self.config.timeout
+                    )
+                
+                # 设置缓冲区大小（仅对支持的端口）
+                if hasattr(self.serial_port, 'set_buffer_size'):
+                    try:
+                        self.serial_port.set_buffer_size(
+                            rx_size=self.config.buffer_size,
+                            tx_size=self.config.buffer_size
+                        )
+                    except Exception as e:
+                        logger.warning(f"设置缓冲区大小失败: {e}")
+                        # 继续执行，不影响连接
                 
                 # 启动工作线程
                 self.running = True
@@ -319,15 +441,39 @@ class SerialManager:
                 # 检查是否有数据要发送
                 self._process_send_queue()
                 
-                # 接收数据
-                if self.serial_port.in_waiting > 0:
-                    data = self.serial_port.read(self.serial_port.in_waiting)
-                    if data:
-                        self._process_received_data(data)
+                # 接收数据 - 针对macOS虚拟端口优化
+                try:
+                    if self.serial_port.in_waiting > 0:
+                        data = self.serial_port.read(self.serial_port.in_waiting)
+                        if data:
+                            self._process_received_data(data)
+                except OSError as e:
+                    # macOS虚拟端口可能在检查in_waiting时出错
+                    if "Inappropriate ioctl for device" in str(e):
+                        # 尝试直接读取
+                        try:
+                            data = self.serial_port.read(1)  # 读取1字节
+                            if data:
+                                self._process_received_data(data)
+                        except:
+                            pass  # 忽略读取错误
+                    else:
+                        raise  # 重新抛出其他错误
                 
                 time.sleep(0.001)  # 1ms
                 
             except Exception as e:
+                # 检查是否为macOS虚拟端口的已知错误
+                import platform
+                is_macos = platform.system() == "Darwin"
+                is_virtual_port = ("/tmp/" in self.config.port or "/dev/ttys" in self.config.port)
+                is_ioctl_error = "Inappropriate ioctl for device" in str(e)
+                
+                if is_macos and is_virtual_port and is_ioctl_error:
+                    # macOS虚拟端口的ioctl错误，不记录为错误
+                    time.sleep(0.01)  # 稍微延长等待时间
+                    continue
+                
                 logger.error(f"接收数据错误: {e}")
                 self.statistics['receive_errors'] += 1
                 

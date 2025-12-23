@@ -193,7 +193,49 @@ class RealTimePlotWidget(QWidget):
         """机器人状态更新"""
         try:
             data = message.data
-            joints = data.get('joints', [])
+            
+            # 处理不同的数据格式
+            joints = []
+            
+            if isinstance(data, dict):
+                if 'joints' in data:
+                    # 直接包含joints字段的格式
+                    joints = data.get('joints', [])
+                elif 'data' in data and hasattr(data['data'], 'joints'):
+                    # 包装格式
+                    robot_status = data['data']
+                    joints = [
+                        {
+                            'id': joint.joint_id,
+                            'position': joint.position,
+                            'velocity': joint.velocity,
+                            'current': joint.current
+                        } for joint in robot_status.joints
+                    ]
+                else:
+                    # 尝试直接访问joints属性
+                    if hasattr(data, 'joints'):
+                        joints = [
+                            {
+                                'id': joint.joint_id,
+                                'position': joint.position,
+                                'velocity': joint.velocity,
+                                'current': joint.current
+                            } for joint in data.joints
+                        ]
+            elif hasattr(data, 'joints'):
+                # 直接是RobotStatus对象
+                joints = [
+                    {
+                        'id': joint.joint_id,
+                        'position': joint.position,
+                        'velocity': joint.velocity,
+                        'current': joint.current
+                    } for joint in data.joints
+                ]
+            
+            if not joints:
+                return
             
             current_time = time.time()
             self.time_data.append(current_time)

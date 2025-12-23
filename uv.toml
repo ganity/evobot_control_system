@@ -1,8 +1,7 @@
 # UV配置文件 - 解决Windows平台兼容性问题
 
-[tool.uv]
-# 指定Python版本
-python = "3.10"
+# 指定Python版本偏好
+python-preference = "only-managed"
 
 # 配置索引源
 index-url = "https://pypi.org/simple/"
@@ -10,12 +9,11 @@ extra-index-url = [
     "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/",
 ]
 
-# Windows平台特定配置
-[tool.uv.sources]
-# 为PyQt5指定特定版本以避免Windows兼容性问题
-pyqt5 = { version = ">=5.15.7,<5.15.18" }
+# 启用预览功能
+preview = true
 
-# 环境要求 - 确保在Windows上解析兼容版本
-required-environments = [
-    "sys_platform == 'win32'",
-]
+# 缓存配置
+no-cache = false
+
+# 网络配置
+native-tls = true

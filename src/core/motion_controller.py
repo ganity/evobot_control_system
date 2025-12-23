@@ -610,10 +610,35 @@ class MotionController:
         # 可以在这里添加状态监控逻辑
         pass
     
-    def _on_robot_state_update(self, data: Dict):
+    def _on_robot_state_update(self, message):
         """机器人状态更新回调"""
         try:
-            joints = data.get('joints', [])
+            data = message.data
+            
+            # 处理不同的数据格式
+            joints = []
+            
+            if isinstance(data, dict):
+                if 'joints' in data:
+                    # 直接包含joints字段的格式 (来自protocol_handler内部发布)
+                    joints = data.get('joints', [])
+                elif 'data' in data and hasattr(data['data'], 'joints'):
+                    # 包装格式 (来自main_window发布)
+                    robot_status = data['data']
+                    joints = [
+                        {
+                            'id': joint.joint_id,
+                            'position': joint.position,
+                            'velocity': joint.velocity,
+                            'current': joint.current
+                        } for joint in robot_status.joints
+                    ]
+                else:
+                    logger.warning(f"未识别的机器人状态数据格式: {data}")
+                    return
+            else:
+                logger.warning(f"机器人状态数据不是字典格式: {type(data)}")
+                return
             
             # 更新位置和电流
             for joint_data in joints:

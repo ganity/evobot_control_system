@@ -13,8 +13,8 @@ from PyQt5.QtWidgets import (
     QTextEdit, QGroupBox, QComboBox, QSplitter, QTabWidget,
     QMessageBox, QFileDialog, QProgressBar
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QFont, QTextCharFormat, QColor, QSyntaxHighlighter
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QObject
+from PyQt5.QtGui import QFont, QTextCharFormat, QColor, QSyntaxHighlighter, QTextCursor
 from typing import Optional, Dict, Any
 import re
 
@@ -123,6 +123,7 @@ class ScriptPanel(QWidget):
     
     # 信号
     script_executed = pyqtSignal(str)  # 脚本执行
+    output_received = pyqtSignal(str)  # 输出接收（线程安全）
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -275,8 +276,11 @@ class ScriptPanel(QWidget):
         self.run_button.clicked.connect(self.run_script)
         self.stop_button.clicked.connect(self.stop_script)
         
+        # 连接输出信号到槽函数（线程安全）
+        self.output_received.connect(self.append_output_safe)
+        
         # 设置脚本引擎回调
-        self.script_engine.set_output_callback(self.on_script_output)
+        self.script_engine.set_output_callback(self.on_script_output_threaded)
         self.script_engine.set_state_callback(self.on_script_state_changed)
     
     def load_example_scripts(self):
@@ -363,14 +367,24 @@ class ScriptPanel(QWidget):
         """停止脚本"""
         self.script_engine.stop_script()
     
-    def on_script_output(self, output: str):
-        """脚本输出回调"""
+    def on_script_output_threaded(self, output: str):
+        """脚本输出回调（可能在其他线程中调用）"""
+        # 通过信号发送到主线程
+        self.output_received.emit(output)
+    
+    def append_output_safe(self, output: str):
+        """线程安全的输出追加"""
         self.output_text.append(output)
         
         # 自动滚动到底部
         cursor = self.output_text.textCursor()
         cursor.movePosition(cursor.End)
         self.output_text.setTextCursor(cursor)
+
+    def on_script_output(self, output: str):
+        """脚本输出回调（已弃用，保留兼容性）"""
+        # 直接调用线程安全版本
+        self.append_output_safe(output)
     
     def on_script_state_changed(self, state: ScriptState):
         """脚本状态变化回调"""

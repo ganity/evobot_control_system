@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QListWidget, QListWidgetItem, QLineEdit, QTextEdit,
     QGroupBox, QProgressBar, QComboBox, QSpinBox, QMessageBox,
     QFileDialog, QDialog, QDialogButtonBox, QFormLayout, QCheckBox,
-    QFrame
+    QFrame, QInputDialog
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont, QIcon
@@ -149,146 +149,175 @@ class TeachingPanel(QWidget):
     
     def setup_ui(self):
         """设置UI"""
-        # 主布局使用垂直布局
+        # 主布局
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setContentsMargins(10, 10, 10, 10)
         
-        # 创建滚动区域
-        from PyQt5.QtWidgets import QScrollArea
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setFrameShape(QFrame.NoFrame)
-        
-        # 内容容器
-        content_widget = QWidget()
-        layout = QVBoxLayout(content_widget)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
-        
-        # 标题
-        title_label = QLabel("示教模式")
+        # 标题栏 (可选)
+        header_layout = QHBoxLayout()
+        title_label = QLabel("示教模式控制台")
         title_font = QFont()
         title_font.setBold(True)
-        title_font.setPointSize(14)
+        title_font.setPointSize(12)
         title_label.setFont(title_font)
-        layout.addWidget(title_label)
+        header_layout.addWidget(title_label)
         
-        # 录制控制区域
-        record_group = QGroupBox("录制控制")
+        # 状态指示
+        self.record_status_label = QLabel("状态: 空闲")
+        self.record_status_label.setStyleSheet("color: #666; font-weight: bold; margin-left: 10px;")
+        header_layout.addWidget(self.record_status_label)
+        
+        header_layout.addStretch()
+        main_layout.addLayout(header_layout)
+
+        # 使用分割器进行左右布局
+        from PyQt5.QtWidgets import QSplitter, QFrame
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setHandleWidth(1)
+        splitter.setStyleSheet("QSplitter::handle { background-color: #E0E0E0; }")
+        
+        # --- 左侧面板：录制与编辑 ---
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setContentsMargins(0, 0, 5, 0)
+        left_layout.setSpacing(10)
+        
+        # 1. 录制控制区域
+        record_group = QGroupBox("当前任务操作")
         record_layout = QVBoxLayout(record_group)
+        record_layout.setSpacing(10)
         
-        # 录制按钮行
-        record_button_layout = QHBoxLayout()
+        # 按钮组
+        buttons_layout = QHBoxLayout()
         
         self.start_record_button = QPushButton("开始录制")
-        self.start_record_button.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; }")
-        record_button_layout.addWidget(self.start_record_button)
+        self.start_record_button.setMinimumHeight(32)
+        self.start_record_button.setCursor(Qt.PointingHandCursor)
+        self.start_record_button.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; border: none; border-radius: 4px; } QPushButton:hover { background-color: #43A047; }")
+        buttons_layout.addWidget(self.start_record_button)
         
         self.stop_record_button = QPushButton("停止录制")
-        self.stop_record_button.setStyleSheet("QPushButton { background-color: #f44336; color: white; }")
+        self.stop_record_button.setMinimumHeight(32)
+        self.stop_record_button.setCursor(Qt.PointingHandCursor)
+        self.stop_record_button.setStyleSheet("QPushButton { background-color: #f44336; color: white; border: none; border-radius: 4px; } QPushButton:hover { background-color: #e53935; }")
         self.stop_record_button.setEnabled(False)
-        record_button_layout.addWidget(self.stop_record_button)
+        buttons_layout.addWidget(self.stop_record_button)
         
         self.add_keyframe_button = QPushButton("添加关键帧")
-        self.add_keyframe_button.setStyleSheet("QPushButton { background-color: #2196F3; color: white; }")
+        self.add_keyframe_button.setMinimumHeight(32)
+        self.add_keyframe_button.setCursor(Qt.PointingHandCursor)
+        self.add_keyframe_button.setStyleSheet("QPushButton { background-color: #2196F3; color: white; border: none; border-radius: 4px; } QPushButton:hover { background-color: #1E88E5; }")
         self.add_keyframe_button.setEnabled(False)
-        record_button_layout.addWidget(self.add_keyframe_button)
+        buttons_layout.addWidget(self.add_keyframe_button)
         
-        record_layout.addLayout(record_button_layout)
+        record_layout.addLayout(buttons_layout)
         
-        # 录制状态
-        self.record_status_label = QLabel("状态: 空闲")
-        record_layout.addWidget(self.record_status_label)
-        
-        # 录制进度
+        # 录制进度条
         self.record_progress = QProgressBar()
+        self.record_progress.setTextVisible(False)
+        self.record_progress.setFixedHeight(4)
+        self.record_progress.setStyleSheet("QProgressBar { background: #E0E0E0; border: none; border-radius: 2px; } QProgressBar::chunk { background: #FF5722; border-radius: 2px; }")
         self.record_progress.setVisible(False)
         record_layout.addWidget(self.record_progress)
         
-        layout.addWidget(record_group)
+        left_layout.addWidget(record_group)
         
-        # 关键帧列表
-        keyframes_group = QGroupBox("关键帧列表")
+        # 2. 关键帧列表区域 (占用剩余空间)
+        keyframes_group = QGroupBox("当前序列关键帧")
         keyframes_layout = QVBoxLayout(keyframes_group)
+        keyframes_layout.setContentsMargins(5, 10, 5, 5)
         
         self.keyframes_list = QListWidget()
-        self.keyframes_list.setMaximumHeight(200)
+        self.keyframes_list.setFrameShape(QFrame.NoFrame)
+        self.keyframes_list.setStyleSheet("QListWidget { background: transparent; } QListWidget::item { border-bottom: 1px solid #EEE; }")
+        self.keyframes_list.setVerticalScrollMode(QListWidget.ScrollPerPixel)
         keyframes_layout.addWidget(self.keyframes_list)
         
-        layout.addWidget(keyframes_group)
+        left_layout.addWidget(keyframes_group, 1) # Stretch factor 1
         
-        # 回放控制区域
-        playback_group = QGroupBox("回放控制")
+        splitter.addWidget(left_widget)
+
+        # --- 右侧面板：回放与管理 ---
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setContentsMargins(5, 0, 0, 0)
+        right_layout.setSpacing(10)
+        
+        # 3. 回放控制区域
+        playback_group = QGroupBox("回放设置")
         playback_layout = QVBoxLayout(playback_group)
+        playback_layout.setSpacing(10)
         
-        # 插值算法选择
-        algorithm_layout = QHBoxLayout()
-        algorithm_layout.addWidget(QLabel("插值算法:"))
-        
+        # 插值设置
+        config_layout = QHBoxLayout()
+        config_layout.addWidget(QLabel("插值算法:"))
         self.algorithm_combo = QComboBox()
         self.algorithm_combo.addItems([
             "线性插值", "三次样条", "五次多项式", "梯形速度", "S曲线"
         ])
         self.algorithm_combo.setCurrentText("三次样条")
-        algorithm_layout.addWidget(self.algorithm_combo)
+        config_layout.addWidget(self.algorithm_combo, 1)
+        playback_layout.addLayout(config_layout)
         
-        algorithm_layout.addStretch()
-        playback_layout.addLayout(algorithm_layout)
-        
-        # 回放按钮
-        playback_button_layout = QHBoxLayout()
-        
-        self.play_button = QPushButton("回放序列")
-        self.play_button.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; }")
+        # 控制按钮
+        playback_btns = QHBoxLayout()
+        self.play_button = QPushButton("播放序列")
+        self.play_button.setMinimumHeight(32)
+        self.play_button.setCursor(Qt.PointingHandCursor)
+        self.play_button.setIcon(QIcon.fromTheme("media-playback-start"))
+        self.play_button.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; border: none; border-radius: 4px; } QPushButton:disabled { background-color: #A5D6A7; }")
         self.play_button.setEnabled(False)
-        playback_button_layout.addWidget(self.play_button)
+        playback_btns.addWidget(self.play_button)
         
-        self.stop_playback_button = QPushButton("停止回放")
-        self.stop_playback_button.setStyleSheet("QPushButton { background-color: #f44336; color: white; }")
+        self.stop_playback_button = QPushButton("停止")
+        self.stop_playback_button.setMinimumHeight(32)
+        self.stop_playback_button.setCursor(Qt.PointingHandCursor)
+        self.stop_playback_button.setIcon(QIcon.fromTheme("media-playback-stop"))
+        self.stop_playback_button.setStyleSheet("QPushButton { background-color: #f44336; color: white; border: none; border-radius: 4px; } QPushButton:disabled { background-color: #EF9A9A; }")
         self.stop_playback_button.setEnabled(False)
-        playback_button_layout.addWidget(self.stop_playback_button)
+        playback_btns.addWidget(self.stop_playback_button)
         
-        playback_layout.addLayout(playback_button_layout)
+        playback_layout.addLayout(playback_btns)
+        right_layout.addWidget(playback_group)
         
-        layout.addWidget(playback_group)
-        
-        # 序列管理区域
-        sequence_group = QGroupBox("序列管理")
+        # 4. 序列管理区域 (占用剩余空间)
+        sequence_group = QGroupBox("已保存序列库")
         sequence_layout = QVBoxLayout(sequence_group)
+        sequence_layout.setContentsMargins(5, 10, 5, 5)
         
-        # 序列列表
         self.sequence_list = QListWidget()
-        self.sequence_list.setMaximumHeight(150)
+        self.sequence_list.setFrameShape(QFrame.NoFrame)
+        self.sequence_list.setStyleSheet("QListWidget { background: transparent; } QListWidget::item { padding: 5px; }")
         sequence_layout.addWidget(self.sequence_list)
         
-        # 序列操作按钮
-        sequence_button_layout = QHBoxLayout()
+        # 底部操作栏
+        action_layout = QGridLayout()
         
-        self.save_button = QPushButton("保存序列")
+        self.save_button = QPushButton("保存当前")
         self.save_button.setEnabled(False)
-        sequence_button_layout.addWidget(self.save_button)
+        action_layout.addWidget(self.save_button, 0, 0)
         
-        self.load_button = QPushButton("加载序列")
-        sequence_button_layout.addWidget(self.load_button)
+        self.load_button = QPushButton("加载选中")
+        action_layout.addWidget(self.load_button, 0, 1)
         
-        self.delete_sequence_button = QPushButton("删除序列")
-        sequence_button_layout.addWidget(self.delete_sequence_button)
+        self.delete_sequence_button = QPushButton("删除选中")
+        self.delete_sequence_button.setStyleSheet("color: #f44336;")
+        action_layout.addWidget(self.delete_sequence_button, 1, 0)
         
         self.refresh_button = QPushButton("刷新列表")
-        sequence_button_layout.addWidget(self.refresh_button)
+        action_layout.addWidget(self.refresh_button, 1, 1)
         
-        sequence_layout.addLayout(sequence_button_layout)
+        sequence_layout.addLayout(action_layout)
         
-        layout.addWidget(sequence_group)
+        right_layout.addWidget(sequence_group, 1) # Stretch factor 1
         
-        # 添加弹性空间
-        layout.addStretch()
+        splitter.addWidget(right_widget)
         
-        # 设置滚动区域的部件
-        scroll_area.setWidget(content_widget)
+        # 设置初始比例 3:2
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 2)
         
-        # 将滚动区域添加到主布局
-        main_layout.addWidget(scroll_area)
+        main_layout.addWidget(splitter)
     
     def connect_signals(self):
         """连接信号"""
@@ -331,6 +360,11 @@ class TeachingPanel(QWidget):
             self.record_progress.setVisible(False)
             self.save_button.setEnabled(True)
             
+            # 设置当前序列为刚录制的序列
+            self.current_sequence = self.teaching_mode.get_current_sequence()
+            if self.current_sequence and len(self.current_sequence.keyframes) > 0:
+                self.play_button.setEnabled(True)
+            
             # 更新关键帧列表
             self.update_keyframes_list()
         else:
@@ -338,7 +372,7 @@ class TeachingPanel(QWidget):
     
     def add_keyframe(self):
         """添加关键帧"""
-        name, ok = QLineEdit().getText(self, "添加关键帧", "关键帧名称:")
+        name, ok = QInputDialog.getText(self, "添加关键帧", "关键帧名称:")
         if ok and name:
             if self.teaching_mode.add_keyframe_manually(name):
                 self.update_keyframes_list()
@@ -349,6 +383,10 @@ class TeachingPanel(QWidget):
         """回放序列"""
         if not self.current_sequence:
             QMessageBox.warning(self, "错误", "请先选择一个序列")
+            return
+        
+        if len(self.current_sequence.keyframes) < 2:
+            QMessageBox.warning(self, "错误", "序列至少需要2个关键帧才能回放")
             return
         
         # 获取插值算法
@@ -362,11 +400,15 @@ class TeachingPanel(QWidget):
         
         algorithm = algorithm_map.get(self.algorithm_combo.currentText(), InterpolationType.CUBIC_SPLINE)
         
+        logger.info(f"开始回放序列: {self.current_sequence.name}, 算法: {self.algorithm_combo.currentText()}")
+        
         if self.teaching_mode.play_sequence(self.current_sequence, algorithm):
             self.play_button.setEnabled(False)
             self.stop_playback_button.setEnabled(True)
+            logger.info("序列回放已启动")
         else:
             QMessageBox.warning(self, "错误", "回放序列失败")
+            logger.error("序列回放启动失败")
     
     def stop_playback(self):
         """停止回放"""
@@ -454,6 +496,24 @@ class TeachingPanel(QWidget):
     def on_sequence_selected(self, item: QListWidgetItem):
         """序列选择事件"""
         filename = item.data(Qt.UserRole)
+        
+        # 加载选中的序列
+        filepath = f"data/sequences/{filename}"
+        sequence = self.teaching_mode.load_sequence(filepath)
+        if sequence:
+            self.current_sequence = sequence
+            self.update_keyframes_list()
+            
+            # 启用回放按钮（如果有关键帧）
+            if len(sequence.keyframes) > 0:
+                self.play_button.setEnabled(True)
+            else:
+                self.play_button.setEnabled(False)
+                
+            logger.info(f"已选择序列: {sequence.name} ({len(sequence.keyframes)} 帧)")
+        else:
+            QMessageBox.warning(self, "错误", "加载序列失败")
+        
         self.sequence_selected.emit(filename)
     
     def update_keyframes_list(self):
