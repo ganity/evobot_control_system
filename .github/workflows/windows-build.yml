@@ -26,26 +26,85 @@ jobs:
         pip install -r requirements-windows.txt
         pip install pyinstaller
     
-    - name: Build executable
+    - name: Build PyQt5 test executable
       run: |
+        echo "构建PyQt5测试程序..."
+        pyinstaller test_pyqt.spec --clean --noconfirm
+    
+    - name: Build debug executable
+      run: |
+        echo "构建调试版本..."
+        pyinstaller evobot_debug.spec --clean --noconfirm
+    
+    - name: Build release executable
+      run: |
+        echo "构建发布版本..."
         pyinstaller evobot.spec --clean --noconfirm
     
-    - name: Verify build
+    - name: Verify builds
       run: |
-        if (Test-Path "dist\EvoBot控制系统\EvoBot控制系统.exe") {
-          $size = (Get-Item "dist\EvoBot控制系统\EvoBot控制系统.exe").Length / 1MB
-          Write-Host "✅ 构建成功，大小: $([math]::Round($size, 2)) MB"
+        echo "检查构建结果..."
+        
+        # 检查PyQt5测试程序
+        if (Test-Path "dist\PyQt5Test\PyQt5Test.exe") {
+          Write-Host "✅ PyQt5测试程序构建成功"
         } else {
-          Write-Host "❌ 构建失败"
-          Get-ChildItem dist -Recurse | Format-Table Name, Length
+          Write-Host "❌ PyQt5测试程序构建失败"
+        }
+        
+        # 检查调试版本
+        if (Test-Path "dist\EvoBot控制系统_Debug\EvoBot控制系统_Debug.exe") {
+          Write-Host "✅ 调试版本构建成功"
+          $size = (Get-Item "dist\EvoBot控制系统_Debug\EvoBot控制系统_Debug.exe").Length / 1MB
+          Write-Host "📦 调试版本大小: $([math]::Round($size, 2)) MB"
+        } else {
+          Write-Host "❌ 调试版本构建失败"
+        }
+        
+        # 检查发布版本
+        if (Test-Path "dist\EvoBot控制系统\EvoBot控制系统.exe") {
+          Write-Host "✅ 发布版本构建成功"
+          $size = (Get-Item "dist\EvoBot控制系统\EvoBot控制系统.exe").Length / 1MB
+          Write-Host "📦 发布版本大小: $([math]::Round($size, 2)) MB"
+        } else {
+          Write-Host "❌ 发布版本构建失败"
           exit 1
         }
     
-    - name: Create release package
+    - name: Create packages
       run: |
-        Compress-Archive -Path "dist\EvoBot控制系统\*" -DestinationPath "EvoBot-Windows.zip"
+        # 创建PyQt5测试包
+        if (Test-Path "dist\PyQt5Test") {
+          Compress-Archive -Path "dist\PyQt5Test\*" -DestinationPath "PyQt5Test-Windows.zip"
+        }
+        
+        # 创建调试版本包
+        if (Test-Path "dist\EvoBot控制系统_Debug") {
+          Compress-Archive -Path "dist\EvoBot控制系统_Debug\*" -DestinationPath "EvoBot-Windows-Debug.zip"
+        }
+        
+        # 创建发布版本包
+        if (Test-Path "dist\EvoBot控制系统") {
+          Compress-Archive -Path "dist\EvoBot控制系统\*" -DestinationPath "EvoBot-Windows.zip"
+        }
     
-    - name: Upload artifact
+    - name: Upload PyQt5 test
+      uses: actions/upload-artifact@v4
+      with:
+        name: PyQt5Test-Windows
+        path: PyQt5Test-Windows.zip
+        retention-days: 7
+      if: always()
+    
+    - name: Upload debug build
+      uses: actions/upload-artifact@v4
+      with:
+        name: EvoBot-Windows-Debug
+        path: EvoBot-Windows-Debug.zip
+        retention-days: 30
+      if: always()
+    
+    - name: Upload release build
       uses: actions/upload-artifact@v4
       with:
         name: EvoBot-Windows
@@ -56,7 +115,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: EvoBot-Windows.zip
+        files: |
+          EvoBot-Windows.zip
+          EvoBot-Windows-Debug.zip
         draft: false
         prerelease: false
       env:

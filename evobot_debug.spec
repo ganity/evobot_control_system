@@ -8,9 +8,9 @@ from pathlib import Path
 project_root = Path(SPECPATH)
 src_dir = project_root / "src"
 
-# 分析主程序
+# 分析主程序 - 使用调试版本
 a = Analysis(
-    ['main.py'],
+    ['main_debug.py'],
     pathex=[str(project_root), str(src_dir)],
     binaries=[],
     datas=[
@@ -19,8 +19,8 @@ a = Analysis(
         ('config/*.json', 'config'),
         # 启动优化器
         ('startup_optimizer.py', '.'),
-        # 其他资源文件（如果存在）
-        ('data/.gitkeep', 'data'),
+        # 源代码目录（用于调试）
+        ('src', 'src'),
     ],
     hiddenimports=[
         # PyQt5核心模块
@@ -60,6 +60,19 @@ a = Analysis(
         'ui.main_window',
         'core.motion_controller',
         'core.zero_position_manager',
+        # 添加更多可能缺失的模块
+        'ui.widgets.joint_control_panel_v2',
+        'ui.widgets.velocity_panel',
+        'ui.widgets.calibration_panel',
+        'ui.widgets.recording_panel',
+        'ui.widgets.zero_position_panel',
+        'ui.widgets.simple_zero_panel',
+        'core.velocity_controller',
+        'core.calibration_manager',
+        'core.trajectory_planner',
+        'core.interpolator',
+        'application.data_recorder',
+        'application.data_player',
     ],
     hookspath=[],
     hooksconfig={},
@@ -89,12 +102,12 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='EvoBot控制系统',
-    debug=True,  # 启用调试模式以便排查问题
+    name='EvoBot控制系统_Debug',
+    debug=True,  # 启用调试模式
     bootloader_ignore_signals=False,
     strip=False,
-    upx=False,  # 禁用UPX压缩，避免兼容性问题
-    console=True,  # 临时启用控制台以便查看错误信息
+    upx=False,  # 禁用UPX压缩
+    console=True,  # 启用控制台以便查看错误信息
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
@@ -112,5 +125,5 @@ coll = COLLECT(
     strip=False,
     upx=False,  # 禁用UPX压缩
     upx_exclude=[],
-    name='EvoBot控制系统',
+    name='EvoBot控制系统_Debug',
 )
