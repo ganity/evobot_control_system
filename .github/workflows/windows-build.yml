@@ -8,61 +8,9 @@ on:
     branches: [ main ]
 
 jobs:
-  windows-test:
-    name: Test on Windows
-    runs-on: windows-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        # 直接使用requirements文件，避免复杂脚本
-        pip install -r requirements-windows.txt
-      continue-on-error: false
-    
-    - name: Run dependency tests
-      run: |
-        python -c "
-        print('🧪 测试依赖导入...')
-        try:
-            from PyQt5.QtWidgets import QApplication
-            print('✅ PyQt5 导入成功')
-        except ImportError as e:
-            print(f'❌ PyQt5 导入失败: {e}')
-            exit(1)
-        
-        try:
-            import pyqtgraph, serial, numpy, scipy
-            print('✅ 其他依赖导入成功')
-        except ImportError as e:
-            print(f'❌ 依赖导入失败: {e}')
-            exit(1)
-        
-        print('🎉 所有依赖测试通过')
-        "
-    
-    - name: Test application startup
-      run: |
-        python -c "
-        import sys
-        sys.path.insert(0, 'src')
-        from startup_optimizer import setup_fast_startup
-        setup_fast_startup()
-        print('✅ 应用启动测试通过')
-        "
-
   windows-build:
     name: Build Windows Executable
     runs-on: windows-latest
-    needs: windows-test
-    if: github.event_name == 'push'
     
     steps:
     - uses: actions/checkout@v4

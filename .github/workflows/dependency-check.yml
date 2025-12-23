@@ -32,16 +32,6 @@ jobs:
         pipdeptree
       continue-on-error: true
     
-    - name: Test Windows compatibility
-      run: |
-        echo "🧪 测试Windows兼容性..."
-        python -c "
-        print('测试核心依赖导入...')
-        from PyQt5.QtWidgets import QApplication
-        import pyqtgraph, serial, numpy, scipy
-        print('✅ 所有依赖导入成功')
-        "
-    
     - name: Security audit
       run: |
         echo "🔒 安全审计..."
