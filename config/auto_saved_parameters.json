@@ -1,0 +1,27 @@
+{
+  "运动控制": {
+    "max_velocity": 2.0,
+    "max_acceleration": 5.0,
+    "max_jerk": 20.0,
+    "position_tolerance": 5,
+    "velocity_tolerance": 0.1
+  },
+  "轨迹规划": {
+    "interpolation_type": "CUBIC_SPLINE",
+    "smoothing_factor": 0.5,
+    "time_scaling": 1.0,
+    "optimize_time": true
+  },
+  "控制系统": {
+    "control_frequency": 200,
+    "buffer_size": 100,
+    "lookahead_time": 0.1,
+    "emergency_decel": 10.0
+  },
+  "安全设置": {
+    "enable_soft_limits": true,
+    "enable_velocity_limits": true,
+    "enable_current_monitor": true,
+    "current_threshold": 1000
+  }
+}

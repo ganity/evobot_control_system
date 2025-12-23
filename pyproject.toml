@@ -1,0 +1,64 @@
+[project]
+name = "evobot-control-system"
+version = "1.0.0"
+description = "EvoBot机器人控制系统 - 10自由度机器人手臂PC端调试和控制程序"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyqt5>=5.15.7",
+    "pyqtgraph>=0.13.0",
+    "pyserial>=3.5",
+    "numpy>=1.24.0,<2.0.0",
+    "scipy>=1.10.0",
+    "pyyaml>=6.0",
+    "loguru>=0.7.0",
+    "roboticstoolbox-python>=1.1.0",
+    "spatialmath-python>=1.1.0",
+    "matplotlib>=3.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-qt>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+evobot = "main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[dependency-groups]
+dev = [
+    "black>=25.12.0",
+    "flake8>=7.3.0",
+    "mypy>=1.19.1",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-qt>=4.5.0",
+]

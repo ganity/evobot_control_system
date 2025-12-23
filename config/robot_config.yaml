@@ -1,0 +1,308 @@
+communication:
+  protocol:
+    escape_char: 254
+    frame_header: 253
+    frame_tail: 248
+    max_retry: 3
+    retry_delay: 0.05
+  serial:
+    baudrate: 1000000
+    buffer_size: 12000
+    bytesize: 8
+    parity: N
+    port: COM3
+    stopbits: 1
+    timeout: 0.1
+control:
+  buffer_high_watermark: 500
+  buffer_low_watermark: 50
+  default_interpolation: trapezoidal
+  enable_feedforward: true
+  enable_pid: false
+  frequency: 200
+  trajectory_buffer_size: 200
+joints:
+- control:
+    feedforward_gain: 0.8
+    kd: 0.1
+    ki: 0.0
+    kp: 1.0
+  id: 0
+  limits:
+    max_acceleration: 1500
+    max_current: 1000
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 800
+    min_position: 0
+  name: thumb
+  safety:
+    emergency_margin: 50
+    overload_threshold: 5.0
+    warning_margin: 100
+  type: revolute
+- control:
+    feedforward_gain: 0.8
+    kd: 0.1
+    ki: 0.0
+    kp: 1.0
+  id: 1
+  limits:
+    max_acceleration: 1500
+    max_current: 1000
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 800
+    min_position: 0
+  name: index_finger
+  safety:
+    emergency_margin: 50
+    overload_threshold: 5.0
+    warning_margin: 100
+  type: revolute
+- control:
+    feedforward_gain: 0.8
+    kd: 0.1
+    ki: 0.0
+    kp: 1.0
+  id: 2
+  limits:
+    max_acceleration: 1500
+    max_current: 1000
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 800
+    min_position: 0
+  name: middle_finger
+  safety:
+    emergency_margin: 50
+    overload_threshold: 5.0
+    warning_margin: 100
+  type: revolute
+- control:
+    feedforward_gain: 0.8
+    kd: 0.1
+    ki: 0.0
+    kp: 1.0
+  id: 3
+  limits:
+    max_acceleration: 1500
+    max_current: 1000
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 800
+    min_position: 0
+  name: ring_finger
+  safety:
+    emergency_margin: 50
+    overload_threshold: 5.0
+    warning_margin: 100
+  type: revolute
+- control:
+    feedforward_gain: 0.8
+    kd: 0.1
+    ki: 0.0
+    kp: 1.0
+  id: 4
+  limits:
+    max_acceleration: 1500
+    max_current: 1000
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 800
+    min_position: 0
+  name: little_finger
+  safety:
+    emergency_margin: 50
+    overload_threshold: 5.0
+    warning_margin: 100
+  type: revolute
+- control:
+    feedforward_gain: 0.9
+    kd: 0.15
+    ki: 0.1
+    kp: 1.2
+  id: 5
+  limits:
+    max_acceleration: 1200
+    max_current: 1500
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 600
+    min_position: 0
+  name: wrist
+  safety:
+    emergency_margin: 50
+    overload_threshold: 5.0
+    warning_margin: 100
+  type: revolute
+- control:
+    feedforward_gain: 1.0
+    kd: 0.2
+    ki: 0.2
+    kp: 1.5
+  id: 6
+  limits:
+    max_acceleration: 800
+    max_current: 2000
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 400
+    min_position: 0
+  name: shoulder1
+  safety:
+    emergency_margin: 50
+    overload_threshold: 8.0
+    warning_margin: 100
+  type: revolute
+- control:
+    feedforward_gain: 1.0
+    kd: 0.2
+    ki: 0.2
+    kp: 1.5
+  id: 7
+  limits:
+    max_acceleration: 800
+    max_current: 2000
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 400
+    min_position: 0
+  name: shoulder2
+  safety:
+    emergency_margin: 50
+    overload_threshold: 8.0
+    warning_margin: 100
+  type: revolute
+- control:
+    feedforward_gain: 0.95
+    kd: 0.18
+    ki: 0.15
+    kp: 1.3
+  id: 8
+  limits:
+    max_acceleration: 1000
+    max_current: 1800
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 500
+    min_position: 0
+  name: elbow1
+  safety:
+    emergency_margin: 50
+    overload_threshold: 6.0
+    warning_margin: 100
+  type: revolute
+- control:
+    feedforward_gain: 0.95
+    kd: 0.18
+    ki: 0.15
+    kp: 1.3
+  id: 9
+  limits:
+    max_acceleration: 1000
+    max_current: 1800
+    max_position: 3000
+    max_temperature: 70
+    max_velocity: 500
+    min_position: 0
+  name: elbow2
+  safety:
+    emergency_margin: 50
+    overload_threshold: 6.0
+    warning_margin: 100
+  type: revolute
+logging:
+  backup_count: 5
+  data_recording:
+    enable: false
+    format: csv
+    output_dir: data/
+    record_frequency: 50
+  enable: true
+  level: INFO
+  log_file: logs/robot.log
+  max_file_size: 10485760
+robot:
+  description: 10自由度机器人手臂
+  dof: 10
+  name: EvoBot
+  version: '1.0'
+safety:
+  emergency_stop_deceleration: 2000
+  enable_collision_detection: false
+  enable_current_limits: true
+  enable_soft_limits: true
+  enable_velocity_limits: true
+trajectory:
+  default_duration: 1.0
+  default_max_acceleration: 1000
+  default_max_jerk: 5000
+  default_max_velocity: 500
+  smooth_factor: 0.1
+ui:
+  enable_3d_visualization: false
+  language: zh_CN
+  plot_history_length: 300
+  theme: light
+  update_frequency: 50
+velocity_control:
+  control_frequency: 200
+  defaults:
+    acceleration: 1000.0
+    interpolation: s_curve
+    jerk: 5651.0
+    velocity: 445.0
+  joints:
+  - id: 0
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  - id: 1
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  - id: 2
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  - id: 3
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  - id: 4
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  - id: 5
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  - id: 6
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  - id: 7
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  - id: 8
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  - id: 9
+    max_acceleration: 2000.0
+    max_jerk: 10000.0
+    max_velocity: 1000.0
+    min_velocity: 10.0
+  mode: trajectory_interpolation
+  presets: {}

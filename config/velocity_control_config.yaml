@@ -1,0 +1,143 @@
+# EvoBot速度控制配置文件
+# 版本: 1.0.0
+
+velocity_control:
+  # 控制模式
+  mode: "trajectory_interpolation"  # 上位机轨迹插值
+
+  # 控制频率
+  control_frequency: 200  # Hz
+
+  # 默认参数
+  defaults:
+    velocity: 500           # 默认速度（单位/秒）
+    acceleration: 1000      # 默认加速度（单位/秒²）
+    jerk: 5000              # 默认加加速度（单位/秒³）
+    interpolation: "trapezoidal"  # 默认插值算法
+
+  # 速度预设
+  presets:
+    very_slow:
+      velocity: 100
+      acceleration: 200
+      jerk: 1000
+      interpolation: "s_curve"
+      description: "非常慢，适合精细操作"
+
+    slow:
+      velocity: 300
+      acceleration: 500
+      jerk: 2000
+      interpolation: "s_curve"
+      description: "慢速，适合调试"
+
+    medium:
+      velocity: 500
+      acceleration: 1000
+      jerk: 5000
+      interpolation: "trapezoidal"
+      description: "中速，默认速度"
+
+    fast:
+      velocity: 800
+      acceleration: 1500
+      jerk: 8000
+      interpolation: "trapezoidal"
+      description: "快速，适合大范围运动"
+
+    very_fast:
+      velocity: 1000
+      acceleration: 2000
+      jerk: 10000
+      interpolation: "trapezoidal"
+      description: "非常快，最大速度"
+
+  # 插值算法配置
+  interpolation_algorithms:
+    trapezoidal:
+      name: "梯形速度曲线"
+      description: "明确的加速、匀速、减速阶段"
+      smoothness: "medium"
+
+    s_curve:
+      name: "S曲线"
+      description: "加加速度连续，最平滑"
+      smoothness: "high"
+
+    cubic_spline:
+      name: "三次样条"
+      description: "速度连续，平滑"
+      smoothness: "high"
+
+    quintic:
+      name: "五次多项式"
+      description: "加速度连续，非常平滑"
+      smoothness: "very_high"
+
+    linear:
+      name: "线性插值"
+      description: "最简单，计算快"
+      smoothness: "low"
+
+  # 各关节速度限制
+  joints:
+    - id: 0
+      name: "thumb"
+      max_velocity: 1000      # 最大速度
+      max_acceleration: 2000  # 最大加速度
+      max_jerk: 10000         # 最大加加速度
+      min_velocity: 10        # 最小速度
+    - id: 1
+      name: "index_finger"
+      max_velocity: 1000
+      max_acceleration: 2000
+      max_jerk: 10000
+      min_velocity: 10
+    - id: 2
+      name: "middle_finger"
+      max_velocity: 1000
+      max_acceleration: 2000
+      max_jerk: 10000
+      min_velocity: 10
+    - id: 3
+      name: "ring_finger"
+      max_velocity: 1000
+      max_acceleration: 2000
+      max_jerk: 10000
+      min_velocity: 10
+    - id: 4
+      name: "little_finger"
+      max_velocity: 1000
+      max_acceleration: 2000
+      max_jerk: 10000
+      min_velocity: 10
+    - id: 5
+      name: "wrist"
+      max_velocity: 800
+      max_acceleration: 1600
+      max_jerk: 8000
+      min_velocity: 10
+    - id: 6
+      name: "shoulder1"
+      max_velocity: 600
+      max_acceleration: 1200
+      max_jerk: 6000
+      min_velocity: 10
+    - id: 7
+      name: "shoulder2"
+      max_velocity: 600
+      max_acceleration: 1200
+      max_jerk: 6000
+      min_velocity: 10
+    - id: 8
+      name: "elbow1"
+      max_velocity: 700
+      max_acceleration: 1400
+      max_jerk: 7000
+      min_velocity: 10
+    - id: 9
+      name: "elbow2"
+      max_velocity: 700
+      max_acceleration: 1400
+      max_jerk: 7000
+      min_velocity: 10
