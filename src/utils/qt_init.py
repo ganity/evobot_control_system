@@ -14,6 +14,7 @@ def register_qt_metatypes():
     """注册Qt元类型以避免警告"""
     try:
         from PyQt5.QtCore import qRegisterMetaType
+        from PyQt5.QtGui import QTextCursor
         
         # 基础数值类型
         qRegisterMetaType("QVector<int>")
@@ -26,6 +27,9 @@ def register_qt_metatypes():
         # 字符串类型
         qRegisterMetaType("QVector<QString>")
         qRegisterMetaType("QList<QString>")
+        
+        # GUI相关类型
+        qRegisterMetaType("QTextCursor")
         
         # 其他常用类型
         qRegisterMetaType("QVector<QPointF>")

@@ -214,6 +214,11 @@ class CompactJointWidget(QFrame):
     def _on_move_clicked(self):
         self.move_requested.emit(self.joint_id, self.target_position)
     
+    def update_current_position(self, position: int):
+        """更新当前位置显示（不改变滑块）"""
+        self.current_position = position
+        self.current_pos_label.setText(str(position))
+    
     def update_status(self, position: int, velocity: float, current: int):
         self.current_position = position
         self.current_velocity = velocity
@@ -441,6 +446,28 @@ class OptimizedJointControlPanel(QWidget):
         self.zero_position_panel.zero_position_changed.connect(self.on_zero_position_changed)
         self.zero_position_panel.move_to_zero_requested.connect(self.on_move_to_zero_requested)
         self.zero_position_panel.read_current_positions_requested.connect(self.on_read_current_positions_requested)
+    
+    def update_joint_position(self, joint_id: int, position: int):
+        """更新指定关节的当前位置显示"""
+        try:
+            if 0 <= joint_id < len(self.joint_widgets):
+                joint_widget = self.joint_widgets[joint_id]
+                joint_widget.update_current_position(position)
+                self.current_positions[joint_id] = position
+                logger.debug(f"更新关节{joint_id}位置: {position}")
+        except Exception as e:
+            logger.error(f"更新关节{joint_id}位置失败: {e}")
+    
+    def update_joint_status(self, joint_id: int, position: int, velocity: int, current: int):
+        """更新指定关节的完整状态"""
+        try:
+            if 0 <= joint_id < len(self.joint_widgets):
+                joint_widget = self.joint_widgets[joint_id]
+                joint_widget.update_status(position, velocity, current)
+                self.current_positions[joint_id] = position
+                logger.debug(f"更新关节{joint_id}状态: 位置={position}, 速度={velocity}, 电流={current}")
+        except Exception as e:
+            logger.error(f"更新关节{joint_id}状态失败: {e}")
     
     def on_joint_position_changed(self, joint_id: int, position: int):
         if 0 <= joint_id < self.joint_count:

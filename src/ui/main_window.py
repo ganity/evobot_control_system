@@ -21,7 +21,7 @@ from PyQt5.QtGui import QIcon, QFont, QColor, QPalette
 from typing import Optional, Dict, Any
 import time
 
-from hardware.serial_manager import SerialManager, SerialConfig, ConnectionState
+from hardware.serial_manager import SerialManager, SerialConfig, ConnectionState, get_serial_manager
 from hardware.protocol_handler import ProtocolHandler, get_protocol_handler
 from hardware.device_monitor import DeviceMonitor, create_device_monitor, Alert, HealthStatus
 from utils.config_manager import ConfigManager
@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
         self.config = config_manager.load_config()
         
         # 硬件组件
-        self.serial_manager = SerialManager()
+        self.serial_manager = get_serial_manager()
         self.protocol_handler = get_protocol_handler()
         self.device_monitor: Optional[DeviceMonitor] = None
         
@@ -740,7 +740,62 @@ class MainWindow(QMainWindow):
     def on_robot_error(self, msg: Message):
         self.log_message(f"机器人错误: {msg.data}", "ERROR")
     def on_robot_state_update(self, msg: Message):
-        pass
+        """处理机器人状态更新"""
+        try:
+            data = msg.data
+            if isinstance(data, dict) and 'type' in data and data['type'] == 'status':
+                robot_status = data.get('data')
+                if robot_status and hasattr(robot_status, 'joints'):
+                    # 更新关节控制面板的位置显示
+                    self._update_joint_positions(robot_status.joints)
+                    
+                    # 更新电流显示
+                    if hasattr(robot_status, 'total_current'):
+                        self._update_current_display(robot_status.frame_type, robot_status.total_current)
+        
+        except Exception as e:
+            logger.error(f"处理机器人状态更新失败: {e}")
+    
+    def _update_joint_positions(self, joints):
+        """更新关节位置显示"""
+        try:
+            # 更新关节控制面板
+            if hasattr(self, 'joint_control_panel') and self.joint_control_panel:
+                for joint in joints:
+                    # 通知关节控制面板更新位置
+                    if hasattr(self.joint_control_panel, 'update_joint_position'):
+                        self.joint_control_panel.update_joint_position(joint.joint_id, joint.position)
+            
+            # 更新状态显示（如果有的话）
+            if hasattr(self, 'status_display') and self.status_display:
+                for joint in joints:
+                    if hasattr(self.status_display, 'update_joint_status'):
+                        self.status_display.update_joint_status(
+                            joint.joint_id, 
+                            joint.position, 
+                            joint.velocity, 
+                            joint.current
+                        )
+        
+        except Exception as e:
+            logger.error(f"更新关节位置显示失败: {e}")
+    
+    def _update_current_display(self, frame_type, total_current):
+        """更新电流显示"""
+        try:
+            # 根据帧类型更新对应的电流显示
+            if hasattr(frame_type, 'name'):
+                if 'ARM' in frame_type.name:
+                    # 手臂板电流
+                    if hasattr(self, 'arm_current_label'):
+                        self.arm_current_label.setText(f"手臂板总电流: {total_current} mA")
+                elif 'FINGER' in frame_type.name or 'WRIST' in frame_type.name:
+                    # 手腕板电流
+                    if hasattr(self, 'wrist_current_label'):
+                        self.wrist_current_label.setText(f"手腕板总电流: {total_current} mA")
+        
+        except Exception as e:
+            logger.error(f"更新电流显示失败: {e}")
     def on_motion_stop(self, _):
         self.log_message("运动停止")
     def on_trajectory_started(self, _):

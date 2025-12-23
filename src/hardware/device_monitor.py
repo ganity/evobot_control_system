@@ -108,12 +108,12 @@ class DeviceMonitor:
         
         # 配置参数
         self.config = {
-            'query_interval': 0.1,      # 查询间隔 (100ms)
-            'monitor_interval': 1.0,    # 监控间隔 (1s)
-            'timeout_threshold': 5.0,   # 超时阈值 (5s)
-            'current_threshold': 1500,  # 电流阈值 (1500mA)
+            'query_interval': 0.2,       # 查询间隔 (200ms，适配50Hz硬件)
+            'monitor_interval': 1.0,     # 监控间隔 (1s)
+            'timeout_threshold': 5.0,    # 超时阈值 (5s)
+            'current_threshold': 1500,   # 电流阈值 (1500mA)
             'temperature_threshold': 60, # 温度阈值 (60°C)
-            'position_tolerance': 50,   # 位置容差 (50单位)
+            'position_tolerance': 50,    # 位置容差 (50单位)
         }
         
         # 回调函数
@@ -124,6 +124,9 @@ class DeviceMonitor:
         self.message_bus.subscribe(Topics.ROBOT_STATE, self._on_robot_state)
         self.message_bus.subscribe(Topics.ROBOT_CONNECTED, self._on_robot_connected)
         self.message_bus.subscribe(Topics.ROBOT_DISCONNECTED, self._on_robot_disconnected)
+        
+        # 设置串口数据接收回调
+        self.serial_manager.set_data_received_callback(self._on_serial_data_received)
         
         logger.info("设备监控器初始化完成")
     
@@ -295,31 +298,41 @@ class DeviceMonitor:
         logger.debug("设备监控线程退出")
     
     def _query_worker(self) -> None:
-        """查询工作线程"""
+        """查询工作线程 - 200ms查询间隔，适配50Hz硬件响应频率"""
         logger.debug("设备查询线程启动")
         
-        query_sequence = 0
+        query_cycle = 0  # 查询周期计数器
         
         while self.running:
             try:
                 if self.serial_manager.is_connected():
-                    # 轮询查询手臂和手腕状态
-                    if query_sequence % 2 == 0:
-                        # 查询手臂状态
+                    # 每200ms轮询查询，交替查询手臂和手腕
+                    # 硬件响应频率50Hz(20ms)，200ms查询频率合适
+                    if query_cycle % 2 == 0:
+                        # 查询手臂状态 (肩部+肘部)
                         query_cmd = self.protocol_handler.encode_query_command(BoardID.ARM_BOARD)
-                        self.serial_manager.send_data(query_cmd)
+                        success = self.serial_manager.send_data(query_cmd)
+                        if success:
+                            logger.debug("发送手臂状态查询")
+                        else:
+                            logger.debug("手臂状态查询发送失败，队列可能已满")
                     else:
-                        # 查询手腕状态
+                        # 查询手腕状态 (手指+手腕)
                         query_cmd = self.protocol_handler.encode_query_command(BoardID.WRIST_BOARD)
-                        self.serial_manager.send_data(query_cmd)
+                        success = self.serial_manager.send_data(query_cmd)
+                        if success:
+                            logger.debug("发送手腕状态查询")
+                        else:
+                            logger.debug("手腕状态查询发送失败，队列可能已满")
                     
-                    query_sequence += 1
+                    query_cycle += 1
                 
-                time.sleep(self.config['query_interval'])
+                # 使用200ms间隔，适配硬件50Hz响应频率
+                time.sleep(0.2)  # 200ms
                 
             except Exception as e:
                 logger.error(f"查询线程错误: {e}")
-                time.sleep(1.0)
+                time.sleep(0.5)  # 错误时等待500ms
         
         logger.debug("设备查询线程退出")
     
@@ -569,6 +582,34 @@ class DeviceMonitor:
             "机器人连接断开",
             message.data
         )
+    
+    def _on_serial_data_received(self, raw_data: bytes) -> None:
+        """处理串口接收到的原始数据"""
+        try:
+            # 使用协议处理器解析数据
+            parsed_frames = self.protocol_handler.parse_received_data(raw_data)
+            
+            for frame_info in parsed_frames:
+                if frame_info['type'] == 'status' and frame_info['data']:
+                    robot_status = frame_info['data']
+                    
+                    # 发布状态更新事件
+                    self.message_bus.publish(
+                        Topics.ROBOT_STATE,
+                        {
+                            'type': 'status',
+                            'data': robot_status,
+                            'timestamp': frame_info['timestamp']
+                        },
+                        MessagePriority.NORMAL
+                    )
+                    
+                    logger.debug(f"处理状态帧: {robot_status.frame_type.name}, {len(robot_status.joints)}个关节")
+        
+        except Exception as e:
+            logger.error(f"处理串口数据失败: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 # 全局设备监控器实例

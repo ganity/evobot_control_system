@@ -196,6 +196,7 @@ class MotionController:
         
         # 订阅机器人状态更新
         self.message_bus.subscribe(Topics.ROBOT_STATE, self._on_robot_state_update)
+        self.message_bus.subscribe(Topics.ROBOT_DISCONNECTED, self._on_robot_disconnected)
         
         logger.info("运动控制器初始化完成")
     
@@ -259,11 +260,11 @@ class MotionController:
                 # 获取当前速度参数
                 velocity_params = self.velocity_controller.get_current_parameters()
                 
-                # 创建轨迹约束
+                # 创建轨迹约束 - 为每个关节设置相同的约束
                 constraints = TrajectoryConstraints(
-                    max_velocity=velocity_params.velocity,
-                    max_acceleration=velocity_params.acceleration,
-                    max_jerk=velocity_params.jerk
+                    max_velocity=[velocity_params.velocity] * 10,
+                    max_acceleration=[velocity_params.acceleration] * 10,
+                    max_jerk=[velocity_params.jerk] * 10
                 )
                 
                 # 规划轨迹
@@ -594,6 +595,10 @@ class MotionController:
     def _on_interpolator_position(self, positions: List[int]):
         """插值器位置输出回调"""
         try:
+            # 检查串口连接状态，如果未连接则直接丢弃数据
+            if not self.serial_manager.is_connected():
+                return  # 静默丢弃数据，不记录警告
+            
             # 发送位置指令到硬件
             command = self.protocol_handler.encode_position_command(positions)
             self.serial_manager.send_data(command)
@@ -609,6 +614,22 @@ class MotionController:
         """插值器状态更新回调"""
         # 可以在这里添加状态监控逻辑
         pass
+    
+    def _on_robot_disconnected(self, message):
+        """机器人断开连接回调"""
+        try:
+            logger.info("检测到机器人断开连接，停止当前运动")
+            
+            # 停止插值器
+            if self.interpolator.is_running():
+                self.interpolator.stop()
+            
+            # 重置状态
+            with self.state_lock:
+                self.mode = ControlMode.MANUAL
+                
+        except Exception as e:
+            logger.error(f"处理机器人断开连接失败: {e}")
     
     def _on_robot_state_update(self, message):
         """机器人状态更新回调"""

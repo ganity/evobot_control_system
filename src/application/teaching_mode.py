@@ -951,9 +951,9 @@ class TeachingModeManager:
             velocity_params = velocity_controller.get_current_parameters()
             
             constraints = TrajectoryConstraints(
-                max_velocity=velocity_params.velocity * sequence.velocity_scaling,
-                max_acceleration=velocity_params.acceleration,
-                max_jerk=velocity_params.jerk
+                max_velocity=[velocity_params.velocity * sequence.velocity_scaling] * 10,
+                max_acceleration=[velocity_params.acceleration] * 10,
+                max_jerk=[velocity_params.jerk] * 10
             )
             
             # 生成轨迹

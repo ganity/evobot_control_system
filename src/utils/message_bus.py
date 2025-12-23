@@ -44,6 +44,26 @@ class Message:
     def __post_init__(self):
         if self.timestamp is None:
             self.timestamp = time.time()
+        if self.message_id is None:
+            import uuid
+            self.message_id = str(uuid.uuid4())[:8]
+    
+    def __lt__(self, other):
+        """定义小于比较，用于优先级队列排序"""
+        if not isinstance(other, Message):
+            return NotImplemented
+        # 按时间戳排序，如果时间戳相同则按消息ID排序
+        if self.timestamp != other.timestamp:
+            return self.timestamp < other.timestamp
+        return self.message_id < other.message_id
+    
+    def __eq__(self, other):
+        """定义相等比较"""
+        if not isinstance(other, Message):
+            return NotImplemented
+        return (self.topic == other.topic and 
+                self.timestamp == other.timestamp and 
+                self.message_id == other.message_id)
 
 
 class MessageBus:

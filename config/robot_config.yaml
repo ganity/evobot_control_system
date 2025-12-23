@@ -12,14 +12,14 @@ communication:
     parity: N
     port: COM3
     stopbits: 1
-    timeout: 0.1
+    timeout: 10.0
 control:
   buffer_high_watermark: 500
   buffer_low_watermark: 50
   default_interpolation: trapezoidal
   enable_feedforward: true
   enable_pid: false
-  frequency: 200
+  frequency: 10
   trajectory_buffer_size: 200
 joints:
 - control:
@@ -247,7 +247,7 @@ ui:
   theme: light
   update_frequency: 50
 velocity_control:
-  control_frequency: 200
+  control_frequency: 10
   defaults:
     acceleration: 1000.0
     interpolation: s_curve

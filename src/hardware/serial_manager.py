@@ -41,7 +41,7 @@ class SerialConfig:
     bytesize: int = 8
     parity: str = "N"
     stopbits: int = 1
-    timeout: float = 0.1
+    timeout: float = 10.0  # 增加超时时间到10秒，与参考实现一致
     buffer_size: int = 12000
 
 
@@ -64,8 +64,8 @@ class SerialManager:
         self.receive_thread: Optional[threading.Thread] = None
         self.monitor_thread: Optional[threading.Thread] = None
         
-        # 数据队列
-        self.send_queue = queue.Queue(maxsize=100)
+        # 数据队列 - 增加队列大小
+        self.send_queue = queue.Queue(maxsize=200)  # 增加发送队列大小
         self.receive_queue = queue.Queue(maxsize=1000)
         
         # 回调函数
@@ -360,7 +360,7 @@ class SerialManager:
             是否发送成功
         """
         if self.connection_state != ConnectionState.CONNECTED:
-            logger.warning("串口未连接，无法发送数据")
+            # 静默丢弃数据，不记录警告（避免大量日志）
             return False
         
         try:
@@ -368,9 +368,17 @@ class SerialManager:
             self.send_queue.put_nowait(data)
             return True
         except queue.Full:
-            logger.warning("发送队列已满，丢弃数据")
-            self.statistics['send_errors'] += 1
-            return False
+            # 队列满时，尝试丢弃一些旧数据为新数据腾出空间
+            try:
+                # 丢弃最老的数据
+                self.send_queue.get_nowait()
+                self.send_queue.put_nowait(data)
+                logger.debug("发送队列已满，丢弃旧数据")
+                return True
+            except queue.Empty:
+                logger.warning("发送队列已满，丢弃数据")
+                self.statistics['send_errors'] += 1
+                return False
     
     def receive_data(self, timeout: float = 0.1) -> Optional[bytes]:
         """

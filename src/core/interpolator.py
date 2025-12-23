@@ -4,7 +4,7 @@
 功能：
 - 实时轨迹插值
 - 轨迹缓冲队列管理
-- 200Hz控制循环
+- 10Hz控制循环 (100ms周期)
 - 轨迹平滑过渡
 - 多线程安全
 """
@@ -177,9 +177,11 @@ class Interpolator:
         self.config = self.config_manager.load_config()
         self.message_bus = get_message_bus()
         
-        # 控制参数
-        self.control_frequency = self.config.get('control', {}).get('frequency', 200)
+        # 控制参数 - 设置为10Hz (100ms周期)
+        self.control_frequency = self.config.get('control', {}).get('frequency', 10)  # 10Hz
         self.control_period = 1.0 / self.control_frequency
+        
+        logger.info(f"插值器初始化: 频率={self.control_frequency}Hz, 周期={self.control_period*1000:.1f}ms")
         
         # 状态管理
         self.state = InterpolatorState.IDLE

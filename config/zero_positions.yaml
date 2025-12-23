@@ -2,168 +2,111 @@ current_zero_positions:
 - description: thumb零位
   joint_id: 0
   name: thumb
-  position: 1950
-  timestamp: '2025-12-23T11:30:29.136513'
+  position: 527
+  timestamp: '2025-12-23T20:36:00.807025'
 - description: index_finger零位
   joint_id: 1
   name: index_finger
-  position: 1500
-  timestamp: '2025-12-23T11:30:29.136630'
+  position: 2082
+  timestamp: '2025-12-23T20:36:00.808042'
 - description: middle_finger零位
   joint_id: 2
   name: middle_finger
-  position: 1500
-  timestamp: '2025-12-23T11:30:29.136641'
+  position: 1227
+  timestamp: '2025-12-23T20:36:00.808060'
 - description: ring_finger零位
   joint_id: 3
   name: ring_finger
-  position: 1500
-  timestamp: '2025-12-23T11:30:29.136680'
+  position: 1669
+  timestamp: '2025-12-23T20:36:00.808068'
 - description: little_finger零位
   joint_id: 4
   name: little_finger
-  position: 1500
-  timestamp: '2025-12-23T11:30:29.136689'
+  position: 1521
+  timestamp: '2025-12-23T20:36:00.808076'
 - description: wrist零位
   joint_id: 5
   name: wrist
-  position: 1500
-  timestamp: '2025-12-23T11:30:29.136700'
+  position: 1521
+  timestamp: '2025-12-23T20:36:00.808088'
 - description: shoulder1零位
   joint_id: 6
   name: shoulder1
-  position: 1500
-  timestamp: '2025-12-23T11:30:29.136732'
+  position: 2030
+  timestamp: '2025-12-23T20:36:00.808104'
 - description: shoulder2零位
   joint_id: 7
   name: shoulder2
-  position: 1500
-  timestamp: '2025-12-23T11:30:29.136751'
+  position: 2024
+  timestamp: '2025-12-23T20:36:00.808112'
 - description: elbow1零位
   joint_id: 8
   name: elbow1
-  position: 1500
-  timestamp: '2025-12-23T11:30:29.136759'
+  position: 2
+  timestamp: '2025-12-23T20:36:00.808120'
 - description: elbow2零位
   joint_id: 9
   name: elbow2
-  position: 1500
-  timestamp: '2025-12-23T11:30:29.136768'
+  position: 160
+  timestamp: '2025-12-23T20:36:00.808128'
 zero_position_sets:
-  debug_test:
-    created_time: '2025-12-23T10:54:30.403392'
-    description: 调试测试零位
+  ZP_2027:
+    created_time: '2025-12-23T20:35:44.807696'
+    description: 用户录制的零位
     is_default: true
-    modified_time: '2025-12-23T10:54:30.403393'
-    name: debug_test
+    modified_time: '2025-12-23T20:35:44.807699'
+    name: ZP_2027
     positions:
     - description: thumb零位
       joint_id: 0
       name: thumb
-      position: 111
-      timestamp: '2025-12-23T10:54:30.403351'
+      position: 527
+      timestamp: '2025-12-23T20:35:44.807498'
     - description: index_finger零位
       joint_id: 1
       name: index_finger
-      position: 222
-      timestamp: '2025-12-23T10:54:30.403359'
+      position: 2082
+      timestamp: '2025-12-23T20:35:44.807585'
     - description: middle_finger零位
       joint_id: 2
       name: middle_finger
-      position: 333
-      timestamp: '2025-12-23T10:54:30.403380'
+      position: 1227
+      timestamp: '2025-12-23T20:35:44.807595'
     - description: ring_finger零位
       joint_id: 3
       name: ring_finger
-      position: 444
-      timestamp: '2025-12-23T10:54:30.403382'
+      position: 1669
+      timestamp: '2025-12-23T20:35:44.807604'
     - description: little_finger零位
       joint_id: 4
       name: little_finger
-      position: 555
-      timestamp: '2025-12-23T10:54:30.403383'
+      position: 1521
+      timestamp: '2025-12-23T20:35:44.807613'
     - description: wrist零位
       joint_id: 5
       name: wrist
-      position: 666
-      timestamp: '2025-12-23T10:54:30.403385'
+      position: 1521
+      timestamp: '2025-12-23T20:35:44.807624'
     - description: shoulder1零位
       joint_id: 6
       name: shoulder1
-      position: 777
-      timestamp: '2025-12-23T10:54:30.403386'
+      position: 2030
+      timestamp: '2025-12-23T20:35:44.807660'
     - description: shoulder2零位
       joint_id: 7
       name: shoulder2
-      position: 888
-      timestamp: '2025-12-23T10:54:30.403388'
+      position: 2024
+      timestamp: '2025-12-23T20:35:44.807670'
     - description: elbow1零位
       joint_id: 8
       name: elbow1
-      position: 999
-      timestamp: '2025-12-23T10:54:30.403389'
+      position: 2
+      timestamp: '2025-12-23T20:35:44.807678'
     - description: elbow2零位
       joint_id: 9
       name: elbow2
-      position: 1111
-      timestamp: '2025-12-23T10:54:30.403390'
-  test_zero:
-    created_time: '2025-12-23T10:30:46.909878'
-    description: 测试零位
-    is_default: true
-    modified_time: '2025-12-23T10:30:46.909879'
-    name: test_zero
-    positions:
-    - description: thumb零位
-      joint_id: 0
-      name: thumb
-      position: 150
-      timestamp: '2025-12-23T10:30:46.909853'
-    - description: index_finger零位
-      joint_id: 1
-      name: index_finger
-      position: 200
-      timestamp: '2025-12-23T10:30:46.909862'
-    - description: middle_finger零位
-      joint_id: 2
-      name: middle_finger
-      position: 300
-      timestamp: '2025-12-23T10:30:46.909865'
-    - description: ring_finger零位
-      joint_id: 3
-      name: ring_finger
-      position: 400
-      timestamp: '2025-12-23T10:30:46.909867'
-    - description: little_finger零位
-      joint_id: 4
-      name: little_finger
-      position: 500
-      timestamp: '2025-12-23T10:30:46.909868'
-    - description: wrist零位
-      joint_id: 5
-      name: wrist
-      position: 600
-      timestamp: '2025-12-23T10:30:46.909870'
-    - description: shoulder1零位
-      joint_id: 6
-      name: shoulder1
-      position: 700
-      timestamp: '2025-12-23T10:30:46.909871'
-    - description: shoulder2零位
-      joint_id: 7
-      name: shoulder2
-      position: 800
-      timestamp: '2025-12-23T10:30:46.909872'
-    - description: elbow1零位
-      joint_id: 8
-      name: elbow1
-      position: 900
-      timestamp: '2025-12-23T10:30:46.909874'
-    - description: elbow2零位
-      joint_id: 9
-      name: elbow2
-      position: 1000
-      timestamp: '2025-12-23T10:30:46.909875'
+      position: 160
+      timestamp: '2025-12-23T20:35:44.807688'
   workflow_test:
     created_time: '2025-12-23T11:03:21.469714'
     description: 工作流程测试零位
@@ -221,60 +164,117 @@ zero_position_sets:
       name: elbow2
       position: 1000
       timestamp: '2025-12-23T11:03:21.469712'
-  零位_1223_1127:
-    created_time: '2025-12-23T11:30:29.136776'
+  动作001:
+    created_time: '2025-12-23T20:38:26.958860'
     description: 用户录制的零位
     is_default: true
-    modified_time: '2025-12-23T11:30:29.136780'
-    name: 零位_1223_1127
+    modified_time: '2025-12-23T20:38:26.958862'
+    name: 动作001
     positions:
     - description: thumb零位
       joint_id: 0
       name: thumb
-      position: 1950
-      timestamp: '2025-12-23T11:30:29.136513'
+      position: 527
+      timestamp: '2025-12-23T20:38:26.958732'
     - description: index_finger零位
       joint_id: 1
       name: index_finger
-      position: 1500
-      timestamp: '2025-12-23T11:30:29.136630'
+      position: 2082
+      timestamp: '2025-12-23T20:38:26.958780'
     - description: middle_finger零位
       joint_id: 2
       name: middle_finger
-      position: 1500
-      timestamp: '2025-12-23T11:30:29.136641'
+      position: 1224
+      timestamp: '2025-12-23T20:38:26.958801'
     - description: ring_finger零位
       joint_id: 3
       name: ring_finger
-      position: 1500
-      timestamp: '2025-12-23T11:30:29.136680'
+      position: 1666
+      timestamp: '2025-12-23T20:38:26.958809'
     - description: little_finger零位
       joint_id: 4
       name: little_finger
-      position: 1500
-      timestamp: '2025-12-23T11:30:29.136689'
+      position: 1550
+      timestamp: '2025-12-23T20:38:26.958816'
     - description: wrist零位
       joint_id: 5
       name: wrist
-      position: 1500
-      timestamp: '2025-12-23T11:30:29.136700'
+      position: 956
+      timestamp: '2025-12-23T20:38:26.958822'
     - description: shoulder1零位
       joint_id: 6
       name: shoulder1
-      position: 1500
-      timestamp: '2025-12-23T11:30:29.136732'
+      position: 264
+      timestamp: '2025-12-23T20:38:26.958835'
     - description: shoulder2零位
       joint_id: 7
       name: shoulder2
-      position: 1500
-      timestamp: '2025-12-23T11:30:29.136751'
+      position: 1843
+      timestamp: '2025-12-23T20:38:26.958842'
     - description: elbow1零位
       joint_id: 8
       name: elbow1
-      position: 1500
-      timestamp: '2025-12-23T11:30:29.136759'
+      position: 841
+      timestamp: '2025-12-23T20:38:26.958849'
     - description: elbow2零位
       joint_id: 9
       name: elbow2
-      position: 1500
-      timestamp: '2025-12-23T11:30:29.136768'
+      position: 184
+      timestamp: '2025-12-23T20:38:26.958855'
+  零位_1223_0001:
+    created_time: '2025-12-23T20:36:00.808139'
+    description: 用户录制的零位
+    is_default: true
+    modified_time: '2025-12-23T20:36:00.808143'
+    name: 零位_1223_0001
+    positions:
+    - description: thumb零位
+      joint_id: 0
+      name: thumb
+      position: 527
+      timestamp: '2025-12-23T20:36:00.807025'
+    - description: index_finger零位
+      joint_id: 1
+      name: index_finger
+      position: 2082
+      timestamp: '2025-12-23T20:36:00.808042'
+    - description: middle_finger零位
+      joint_id: 2
+      name: middle_finger
+      position: 1227
+      timestamp: '2025-12-23T20:36:00.808060'
+    - description: ring_finger零位
+      joint_id: 3
+      name: ring_finger
+      position: 1669
+      timestamp: '2025-12-23T20:36:00.808068'
+    - description: little_finger零位
+      joint_id: 4
+      name: little_finger
+      position: 1521
+      timestamp: '2025-12-23T20:36:00.808076'
+    - description: wrist零位
+      joint_id: 5
+      name: wrist
+      position: 1521
+      timestamp: '2025-12-23T20:36:00.808088'
+    - description: shoulder1零位
+      joint_id: 6
+      name: shoulder1
+      position: 2030
+      timestamp: '2025-12-23T20:36:00.808104'
+    - description: shoulder2零位
+      joint_id: 7
+      name: shoulder2
+      position: 2024
+      timestamp: '2025-12-23T20:36:00.808112'
+    - description: elbow1零位
+      joint_id: 8
+      name: elbow1
+      position: 2
+      timestamp: '2025-12-23T20:36:00.808120'
+    - description: elbow2零位
+      joint_id: 9
+      name: elbow2
+      position: 160
+      timestamp: '2025-12-23T20:36:00.808128'
