@@ -5,7 +5,7 @@ description = "EvoBot机器人控制系统 - 10自由度机器人手臂PC端调�
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "pyqt5>=5.15.7",
+    "pyqt5>=5.15.7,<5.15.18",
     "pyqtgraph>=0.13.0",
     "pyserial>=3.5",
     "numpy>=1.24.0,<2.0.0",
